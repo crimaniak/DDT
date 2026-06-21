@@ -36,9 +36,11 @@ public class ContentAssist_InteractionTest extends ContentAssistUI_CommonTest {
 	
 	public static final String[] EXPECTED_IN_TEST_f = array(
 		"fParam", "func(int a, List!(Foo) a)", "foobarvar",
-		"foovar", "foox", 
+		"foovar", "foox",
 //		"func(char b, List!(Foo) b)", "func()",
-		"FooBar",  "foo_t", "fooalias", "fooOfModule", "frak" , "Foo"
+		"FooBar",  "foo_t", "fooalias", "fooOfModule", "frak" , "Foo",
+		// From D runtime object.d (visible when a D compiler is installed):
+		"flags()", "find(char[] classname)"
 	);
 	
 	public static final String[] EXPECTED_IN_TEST_fo = array(

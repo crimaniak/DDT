@@ -108,10 +108,24 @@ public class CompilerInstallDetector {
 		
 		// This is some Linux distro, which one?
 		if(cmdDir.resolve_fromValid("../include/dlang/ldc").toFile().exists()) {
-			return new CompilerInstall(commandPath, ECompilerType.LDC, 
+			return new CompilerInstall(commandPath, ECompilerType.LDC,
 				cmdDir.resolve_fromValid("../include/dlang/ldc"));
 		}
-		
+
+		// Ubuntu/Debian package layout: /usr/lib/ldc/<arch>/include/d/
+		Location ldcLibDir = cmdDir.resolve_fromValid("../lib/ldc");
+		if(ldcLibDir.toFile().isDirectory()) {
+			File[] archDirs = ldcLibDir.toFile().listFiles(File::isDirectory);
+			if(archDirs != null) {
+				for(File archDir : archDirs) {
+					Location includeD = Location.create_fromValid(archDir.toPath().resolve("include/d"));
+					if(includeD.resolve_fromValid("std").toFile().exists()) {
+						return new CompilerInstall(commandPath, ECompilerType.LDC, includeD);
+					}
+				}
+			}
+		}
+
 		return null;
 	}
 	
