@@ -14,6 +14,6 @@ package lang_project_id.jvmcheck;
 public interface JvmCheckConstants_Actual {
 	
 	String FEATURE_NAME = "DDT";
-	int REQUIRED_JAVA_VERSION = 8;
+	int REQUIRED_JAVA_VERSION = 11;
 	
 }

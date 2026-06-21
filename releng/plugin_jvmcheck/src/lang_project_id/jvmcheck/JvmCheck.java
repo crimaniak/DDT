@@ -26,14 +26,19 @@ public class JvmCheck implements IStartup, JvmCheckConstants_Actual {
 	public static int getJavaVersion() {
 	    String versionProperty = getJavaVersionProperty();
 	    String[] versionSegments = versionProperty.split("\\.");
-	    
-	    if(versionSegments.length < 2) {
+
+	    if(versionSegments.length < 1) {
 	    	return -1;
 	    }
-	    String javaVersionStr = versionSegments[1];
-		
+	    // Java 8 and earlier: "1.8.0_xxx" — version is segment[1]
+	    // Java 9 and later:   "21.0.3"   — version is segment[0]
+	    String majorStr = versionSegments[0];
 	    try {
-			return Integer.parseInt(javaVersionStr);
+	    	int major = Integer.parseInt(majorStr);
+	    	if(major == 1 && versionSegments.length >= 2) {
+	    		return Integer.parseInt(versionSegments[1]);
+	    	}
+	    	return major;
 		} catch(NumberFormatException e) {
 			return -1;
 		}
