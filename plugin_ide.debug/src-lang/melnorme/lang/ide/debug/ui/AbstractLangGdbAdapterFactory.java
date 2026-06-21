@@ -25,6 +25,7 @@ import melnorme.lang.ide.debug.ui.viewmodel.GdbExtendedViewModelAdapter;
 import melnorme.lang.ide.debug.ui.viewmodel.Lang_GdbExpressionVMProvider;
 import melnorme.lang.ide.debug.ui.viewmodel.Lang_GdbVariableVMProvider;
 
+@SuppressWarnings("restriction")
 public abstract class AbstractLangGdbAdapterFactory extends GdbAdapterFactory {
 	
     @Override

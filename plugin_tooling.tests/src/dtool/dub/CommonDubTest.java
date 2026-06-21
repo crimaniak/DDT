@@ -15,9 +15,18 @@ import static melnorme.utilbox.core.Assert.AssertNamespace.assertFail;
 import static melnorme.utilbox.core.Assert.AssertNamespace.assertTrue;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeoutException;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import dtool.dub.DubBundle.BundleFile;
 import dtool.tests.CommonDToolTest;
@@ -225,15 +234,60 @@ public class CommonDubTest extends CommonDToolTest {
 	public static void dubAddPath(Location packageRootDir) throws CommonException {
 		String packageRootDirStr = packageRootDir.toString();
 		System.out.println(":::: Adding DUB package root path: " + packageRootDirStr);
-		String[] arguments = array("add-path", packageRootDirStr);
-		runDubCommand(3000, arguments);
+		modifyLocalPackages(packageRootDirStr, true);
 	}
-	
+
 	public static void dubRemovePath(Location packageRootDir) throws CommonException {
 		String packageRootDirStr = packageRootDir.toString();
 		System.out.println(":::: Removing DUB package root path: " + packageRootDirStr);
-		String[] arguments = array("remove-path", packageRootDirStr);
-		runDubCommand(3000, arguments);
+		modifyLocalPackages(packageRootDirStr, false);
+	}
+
+	// DUB 1.40+ replaces local-packages.json on each `dub add-path` call instead of appending.
+	// We directly manipulate the JSON file to properly support multiple registered paths.
+	@SuppressWarnings("deprecation")
+	private static void modifyLocalPackages(String path, boolean add) throws CommonException {
+		Path localPackagesFile = Paths.get(System.getProperty("user.home"), ".dub", "packages", "local-packages.json");
+		JsonArray array = new JsonArray();
+		if(Files.exists(localPackagesFile)) {
+			try {
+				String content = new String(Files.readAllBytes(localPackagesFile), StandardCharsets.UTF_8).trim();
+				if(!content.isEmpty()) {
+					array = new JsonParser().parse(content).getAsJsonArray();
+				}
+			} catch(IOException e) {
+				// start with empty array if file is unreadable
+			}
+		}
+		if(add) {
+			boolean found = false;
+			for(JsonElement elem : array) {
+				if(elem.isJsonObject() && path.equals(elem.getAsJsonObject().get("path").getAsString())) {
+					found = true;
+					break;
+				}
+			}
+			if(!found) {
+				JsonObject entry = new JsonObject();
+				entry.addProperty("name", "*");
+				entry.addProperty("path", path);
+				array.add(entry);
+			}
+		} else {
+			JsonArray filtered = new JsonArray();
+			for(JsonElement elem : array) {
+				if(!elem.isJsonObject() || !path.equals(elem.getAsJsonObject().get("path").getAsString())) {
+					filtered.add(elem);
+				}
+			}
+			array = filtered;
+		}
+		try {
+			Gson gson = new GsonBuilder().setPrettyPrinting().create();
+			Files.write(localPackagesFile, gson.toJson(array).getBytes(StandardCharsets.UTF_8));
+		} catch(IOException e) {
+			throw new CommonException("Failed to write local-packages.json: " + e.getMessage());
+		}
 	}
 	
 	public static void runDubCommand(int timeout, String... arguments) throws CommonException {

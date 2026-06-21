@@ -21,6 +21,7 @@ import org.eclipse.cdt.dsf.ui.viewmodel.IVMProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.ui.IDebugUIConstants;
 
+@SuppressWarnings("restriction")
 @ThreadSafe
 public class GdbExtendedViewModelAdapter extends GdbViewModelAdapter
 {

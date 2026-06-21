@@ -18,10 +18,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import com.google.gson.internal.bind.TypeAdapters;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
-import com.google.gson.stream.MalformedJsonException;
 
 import melnorme.utilbox.core.CommonException;
 
@@ -58,19 +56,15 @@ public class JsonParserX {
 	}
 	
 	public JsonElement parse(JsonReader reader) throws IOException, JsonSyntaxExceptionX {
-		// Based on GSON 2.2.4 code of Streams.parse(json);
-		
 		try {
-			return TypeAdapters.JSON_ELEMENT.read(reader);
-		} catch(MalformedJsonException e) {
-			throw new JsonSyntaxExceptionX(e);
+			return JsonParser.parseReader(reader);
 		} catch(NumberFormatException e) {
 			throw new JsonSyntaxExceptionX(e);
 		} catch(JsonParseException e) {
-			// I don't think JsonParseException is ever thrown from code above, 
-			// not with normal JsonReader at least (a subclass might though). 
-			// So just in case, sanitize it:
-			throw new JsonSyntaxExceptionX(e.getCause());
+			if(e.getCause() instanceof IOException) {
+				throw (IOException) e.getCause();
+			}
+			throw new JsonSyntaxExceptionX(e.getCause() != null ? e.getCause() : e);
 		}
 	}
 	

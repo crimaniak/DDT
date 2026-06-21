@@ -7,6 +7,7 @@ import org.eclipse.cdt.dsf.service.DsfSession;
 import org.eclipse.cdt.dsf.ui.viewmodel.AbstractVMAdapter;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 
+@SuppressWarnings("restriction")
 public class Lang_GdbExpressionVMProvider extends GdbExpressionVMProvider_Override
 		implements IElementFormatProvider {
 	

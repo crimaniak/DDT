@@ -148,7 +148,7 @@
                class="org.eclipse.cdt.debug.internal.ui.actions.ResumeAtLineActionDelegate"
                menubarPath="additions"
                enablesFor="1"
-               id="org.eclipse.cdt.debug.internal.ui.actions.ResumeAtLineActionDelegate">
+               id="org.eclipse.cdt.debug.ui.actions.ResumeAtLineActionDelegate">
          </action>
          <action
                label="%MoveToLineAction.label"
@@ -157,7 +157,7 @@
                class="org.eclipse.cdt.debug.internal.ui.actions.MoveToLineActionDelegate"
                menubarPath="additions"
                enablesFor="1" 
-               id="org.eclipse.cdt.debug.internal.ui.actions.MoveToLineActionDelegate">
+               id="org.eclipse.cdt.debug.ui.actions.MoveToLineActionDelegate">
          </action>
          <action
                helpContextId="run_to_line_action_context"

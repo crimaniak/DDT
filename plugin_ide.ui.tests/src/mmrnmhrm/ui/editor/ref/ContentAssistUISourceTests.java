@@ -90,10 +90,10 @@ public class ContentAssistUISourceTests extends CoreResolverSourceTests {
 		}
 		
 		Object completionProposalPopup = ReflectionUtils.readField(ca, "fProposalPopup");
-		ICompletionProposal[] proposals = (ICompletionProposal[]) 
-				ReflectionUtils.readField(completionProposalPopup, "fComputedProposals");
-		ICompletionProposal[] filtered = (ICompletionProposal[]) 
-				ReflectionUtils.readField(completionProposalPopup, "fFilteredProposals");
+		ICompletionProposal[] proposals = ContentAssistUI_CommonTest.toProposalArray(
+				ReflectionUtils.readField(completionProposalPopup, "fComputedProposals"));
+		ICompletionProposal[] filtered = ContentAssistUI_CommonTest.toProposalArray(
+				ReflectionUtils.readField(completionProposalPopup, "fFilteredProposals"));
 		
 		if(nullToEmpty(proposals).length == 0) {
 			assertTrue(filtered.length == 0 || 

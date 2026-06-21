@@ -19,7 +19,6 @@ import org.eclipse.cdt.dsf.datamodel.DMContexts;
 import org.eclipse.cdt.dsf.debug.service.IDsfDebugServicesFactory;
 import org.eclipse.cdt.dsf.debug.service.IExpressions;
 import org.eclipse.cdt.dsf.debug.service.command.ICommandControl;
-import org.eclipse.cdt.dsf.gdb.internal.GdbPlugin;
 import org.eclipse.cdt.dsf.gdb.launching.FinalLaunchSequence_7_7;
 import org.eclipse.cdt.dsf.gdb.service.GDBBackend;
 import org.eclipse.cdt.dsf.gdb.service.GDBPatternMatchingExpressions;
@@ -147,7 +146,7 @@ public class LangDebugServicesExtensions implements IDsfDebugServicesFactory {
 			// not what we need.
 			MIExpressionDMC exprDmc = DMContexts.getAncestorOfType(dmc, MIExpressionDMC.class);
 			if (exprDmc == null ) {
-				rm.setStatus(new Status(IStatus.ERROR, GdbPlugin.PLUGIN_ID, INVALID_HANDLE, "Invalid context for evaluating expressions.", null)); //$NON-NLS-1$
+				rm.setStatus(new Status(IStatus.ERROR, "org.eclipse.cdt.dsf.gdb", INVALID_HANDLE, "Invalid context for evaluating expressions.", null)); //$NON-NLS-1$
 				rm.done();
 			} else {
 				if (DETAILS_FORMAT.equals(dmc.getFormatID())) {

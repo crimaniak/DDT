@@ -22,7 +22,7 @@ import org.eclipse.cdt.debug.core.model.ICLineBreakpoint;
 import org.eclipse.cdt.debug.core.model.ICTracepoint;
 import org.eclipse.cdt.debug.core.model.ICWatchpoint;
 import org.eclipse.cdt.debug.internal.ui.CDebugModelPresentation;
-import org.eclipse.cdt.debug.internal.ui.OverlayImageDescriptor;
+import org.eclipse.jface.viewers.DecorationOverlayIcon;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -137,8 +137,14 @@ public class CBreakpointLabelAdapter implements IAdapterFactory {
 				ImageDescriptor[] computeOverlays = 
 						ReflectionUtils.uncheckedInvoke(this, computeOverlaysMethod, breakpoint);
 				
-				OverlayImageDescriptor imageDescriptor = new OverlayImageDescriptor(
-					fDebugImageRegistry.get(descriptor), computeOverlays);
+				ImageDescriptor[] overlays = computeOverlays;
+				if(overlays.length < 5) {
+					ImageDescriptor[] padded = new ImageDescriptor[5];
+					System.arraycopy(overlays, 0, padded, 0, overlays.length);
+					overlays = padded;
+				}
+				DecorationOverlayIcon imageDescriptor = new DecorationOverlayIcon(
+					fDebugImageRegistry.get(descriptor), overlays);
 				
 				return LangImages.getManagedImage(imageDescriptor );
 			} catch(RuntimeException e) {

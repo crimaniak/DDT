@@ -73,7 +73,17 @@ public class ContentAssistUI_CommonTest extends CommonDeeUITest {
 	protected static ICompletionProposal[] getProposals(ContentAssistant ca) throws NoSuchFieldException {
 		// A bit of hack
 		Object proposalPopup = ReflectionUtils.readField(ca, "fProposalPopup");
-		return downCast(ReflectionUtils.readField(proposalPopup, "fFilteredProposals"));
+		return toProposalArray(ReflectionUtils.readField(proposalPopup, "fFilteredProposals"));
+	}
+
+	@SuppressWarnings("unchecked")
+	public static ICompletionProposal[] toProposalArray(Object raw) {
+		if(raw == null) return null;
+		if(raw instanceof List) {
+			List<ICompletionProposal> list = (List<ICompletionProposal>) raw;
+			return list.isEmpty() ? null : list.toArray(new ICompletionProposal[0]);
+		}
+		return (ICompletionProposal[]) raw;
 	}
 	
 	/* ----------------------------------- */

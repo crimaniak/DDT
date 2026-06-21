@@ -105,12 +105,17 @@ public class ExecutorTaskAgent_Test extends CommonTestExt {
 		public void dispose() {
 			this.shutdownNowAndCancelAll();
 		}
-		
+
+		@Override
+		public void close() {
+			dispose();
+		}
+
 		@Override
 		public void awaitTermination() throws InterruptedException {
 			super.awaitTermination();
 		}
-		
+
 	}
 	
 	@Test

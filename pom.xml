@@ -11,7 +11,7 @@
 	<packaging>pom</packaging>
 
 	<properties>
-		<tycho-version>0.26.0</tycho-version>
+		<tycho-version>3.0.5</tycho-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<parentBaseDir>${project.parent.basedir}</parentBaseDir>
@@ -51,13 +51,13 @@
 	<repositories>
 		<repository>
 			<layout>p2</layout>
-			<id>neon</id>
-			<url>http://download.eclipse.org/releases/neon</url>
+			<id>eclipse-2025-03</id>
+			<url>https://download.eclipse.org/releases/2025-03/</url>
 		</repository>
 		<repository>
 			<layout>p2</layout>
 			<id>orbit</id>
-			<url>http://archive.eclipse.org/tools/orbit/downloads/drops/R20160520211859/repository/</url>
+			<url>https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/2025-03/</url>
 		</repository>
 	</repositories>
 	
@@ -161,7 +161,7 @@
 			<id>platform-linux</id>
 			<activation><os><family>linux</family></os></activation>
 			<properties>
-				<DTool.DubPath>${rootBuildDirectory}/dub/dub</DTool.DubPath>
+				<DTool.DubPath>dub</DTool.DubPath>
 			</properties>
 		</profile>
 		

@@ -23,17 +23,13 @@ import org.eclipse.cdt.debug.core.model.ICEventBreakpoint;
 import org.eclipse.cdt.debug.core.model.ICFunctionBreakpoint;
 import org.eclipse.cdt.debug.core.model.ICLineBreakpoint;
 import org.eclipse.cdt.debug.core.model.ICWatchpoint;
-import org.eclipse.cdt.debug.internal.ui.actions.breakpoints.ToggleBreakpointAdapter;
 import org.eclipse.cdt.debug.ui.breakpoints.AbstractToggleBreakpointAdapter;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.ui.IWorkbenchPart;
 
-/** LANG: Copied from {@link ToggleBreakpointAdapter}
- * 
+/**
  * Toggles a line breakpoint in a C/C++ editor.
- * 
- * @since 7.2
  */
 public class LangToggleBreakpointAdapter extends AbstractToggleBreakpointAdapter {
 
