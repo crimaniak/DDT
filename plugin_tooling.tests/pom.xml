@@ -34,7 +34,7 @@
 				<plugin>
 					<groupId>com.googlecode.maven-download-plugin</groupId>
 					<artifactId>download-maven-plugin</artifactId>
-					<version>1.2.0</version>
+					<version>1.9.0</version>
 					<executions>
 						<execution>
 							<id>download-dub-windows</id>
@@ -61,7 +61,7 @@
 				<plugin>
 					<groupId>com.googlecode.maven-download-plugin</groupId>
 					<artifactId>download-maven-plugin</artifactId>
-					<version>1.2.0</version>
+					<version>1.9.0</version>
 					<executions>
 						<execution>
 							<id>download-dub-linux</id>
