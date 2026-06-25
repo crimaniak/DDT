@@ -19,6 +19,12 @@
 #PARSE(EXPRESSION)            #@INDEXEE (#@EXPARGS_ESEP #@CLOSEPARENS_OR_BREAK
 #STRUCTURE_EXPECTED: ExpCall( #@INDEXEE  #@EXPARGS_ESEP )
 
+▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂ named arguments (DIP1040, DMD 2.103+)
+#PARSE(EXPRESSION)   foo(x: 1)
+#STRUCTURE_EXPECTED: ExpCall( #@ExpIdentifier ExpNamedArgument(Integer) )
+▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂
+#PARSE(EXPRESSION)   foo(x: 1, y: bar)
+#STRUCTURE_EXPECTED: ExpCall( #@ExpIdentifier ExpNamedArgument(Integer) ExpNamedArgument(#@ExpIdentifier) )
 ▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂ special case for opCall
 #PARSE(EXPRESSION)    typeof(foo) (123 )
 #STRUCTURE_EXPECTED:  ExpCall( ExpReference(RefTypeof(#@ExpIdentifier)) Integer )

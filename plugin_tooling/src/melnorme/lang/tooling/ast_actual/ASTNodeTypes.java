@@ -88,7 +88,8 @@ public enum ASTNodeTypes {
 	
 	EXP_INDEX,
 	EXP_CALL,
-	
+	EXP_NAMED_ARGUMENT,
+
 	EXP_PREFIX,
 	EXP_NEW,
 	EXP_NEW_ANON_CLASS,

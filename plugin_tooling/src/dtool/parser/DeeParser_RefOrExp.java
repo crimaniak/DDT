@@ -48,6 +48,7 @@ import dtool.ast.expressions.ExpLiteralMapArray;
 import dtool.ast.expressions.ExpLiteralMapArray.MapArrayLiteralKeyValue;
 import dtool.ast.expressions.ExpLiteralString;
 import dtool.ast.expressions.ExpMixinString;
+import dtool.ast.expressions.ExpNamedArgument;
 import dtool.ast.expressions.ExpNew;
 import dtool.ast.expressions.ExpNewAnonClass;
 import dtool.ast.expressions.ExpNull;
@@ -1139,11 +1140,20 @@ protected class ParseRule_Expression {
 		return parse.resultConclude(new ExpCall(callee, args));
 	}
 	
-	protected NodeVector<Expression> parseExpArgumentList(ParseHelper parse, boolean canBeEmpty, 
+	protected NodeVector<Expression> parseExpArgumentList(ParseHelper parse, boolean canBeEmpty,
 		DeeTokens tokenLISTCLOSE) throws OperationCancellation {
 		SimpleListParseHelper<Expression> elementListParse = new SimpleListParseHelper<Expression>() {
 			@Override
 			protected Expression parseElement(boolean createMissing) throws OperationCancellation {
+				// Named argument: identifier : expr  (DIP1040, DMD 2.103+)
+				if(lookAhead() == DeeTokens.IDENTIFIER && lookAhead(1) == DeeTokens.COLON) {
+					ParseHelper argParse = new ParseHelper(lookAheadElement());
+					LexElement nameToken = consumeLookAhead(DeeTokens.IDENTIFIER);
+					consumeLookAhead(DeeTokens.COLON);
+					Expression value = parseAssignExpression().node;
+					if(createMissing) value = nullExpToParseMissing(value);
+					return argParse.conclude(new ExpNamedArgument(nameToken.getSourceValue(), value));
+				}
 				Expression arg = parseAssignExpression().node;
 				return createMissing ? nullExpToParseMissing(arg) : arg;
 			}
