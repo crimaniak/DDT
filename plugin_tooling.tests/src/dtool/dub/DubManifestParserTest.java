@@ -79,6 +79,20 @@ public class DubManifestParserTest extends CommonDubTest {
 	
 	
 	@Test
+	public void testSdlBasic() throws Exception { testSdlBasic$(); }
+	public void testSdlBasic$() throws Exception {
+		testBundle(main(DUB_TEST_BUNDLES.resolve_fromValid("sdl_lib"),
+			null, "sdl_lib", DubBundle.DEFAULT_VERSION, paths("src", "src2"),
+			rawDeps("bar_lib")));
+
+		DubBundle sdlBundle = parseDubBundle(DUB_TEST_BUNDLES.resolve_fromValid("sdl_lib"));
+		assertAreEqual(sdlBundle.getTargetName(), "sdl_lib_out");
+		assertAreEqual(sdlBundle.getTargetPath(), "bin");
+		assertAreEqual(sdlBundle.getConfigurations(),
+			ArrayList2.create(new DubConfiguration("metro-app", "executable", "sdl_metro", null)));
+	}
+
+	@Test
 	public void testBuildConfigs() throws Exception { testBuildConfigs$(); }
 	public void testBuildConfigs$() throws Exception {
 		BundlePath BUILD_CONFIGS = bundlePath(DUB_TEST_BUNDLES, "build_configs");

@@ -1,0 +1,11 @@
+// SDL test bundle for DDT unit tests
+name "sdl_lib"
+dependency "bar_lib" version="~master"
+sourcePaths "src" "src2"
+importPaths "src" "src2"
+targetName "sdl_lib_out"
+targetPath "bin"
+configuration "metro-app" {
+    targetType "executable"
+    targetName "sdl_metro"
+}

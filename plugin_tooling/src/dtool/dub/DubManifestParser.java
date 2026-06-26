@@ -48,7 +48,7 @@ public class DubManifestParser extends CommonDubParser {
 		assertNotNull(bundlePath);
 		Location manifestLocation = bundlePath.getManifestLocation(true);
 		if(manifestLocation != null && nullAsEmpty(manifestLocation.getFileName()).endsWith(".sdl")) {
-			return null; // We only know how to parse JSON
+			return DubSdlParser.parseDubBundleFromSdl(bundlePath, manifestLocation);
 		}
 		return new DubManifestParser().parseDubBundle(bundlePath, manifestLocation);
 	}
