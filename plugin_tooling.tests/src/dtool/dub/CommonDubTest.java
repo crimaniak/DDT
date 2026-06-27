@@ -283,6 +283,7 @@ public class CommonDubTest extends CommonDToolTest {
 			array = filtered;
 		}
 		try {
+			Files.createDirectories(localPackagesFile.getParent());
 			Gson gson = new GsonBuilder().setPrettyPrinting().create();
 			Files.write(localPackagesFile, gson.toJson(array).getBytes(StandardCharsets.UTF_8));
 		} catch(IOException e) {
