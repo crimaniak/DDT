@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 
 import melnorme.lang.ide.core.DeeToolPreferences;
 import melnorme.lang.ide.core.LangCore;
+import melnorme.utilbox.fields.Field;
 import melnorme.utilbox.fields.IFieldView;
 import melnorme.utilbox.fields.IFieldView.FieldListenerRegistration;
 
@@ -48,6 +49,8 @@ public class LspServer {
 
 	private LspTextSynchronizer textSync;
 
+	private final Field<String> statusField = new Field<>("Not running");
+
 	private final FieldListenerRegistration enabledListener;
 	private final FieldListenerRegistration pathListener;
 
@@ -69,6 +72,10 @@ public class LspServer {
 
 	public LspMessageRouter getRouter() {
 		return router;
+	}
+
+	public IFieldView<String> getStatusField() {
+		return statusField;
 	}
 
 	/** Wire in the text synchronizer so it can be reset when serve-d restarts. */
@@ -104,6 +111,8 @@ public class LspServer {
 			}
 		}
 
+		statusField.setFieldValue("Starting…");
+
 		try {
 			ProcessBuilder pb = new ProcessBuilder(cmd);
 			pb.redirectErrorStream(false); // keep stderr separate (serve-d logs there)
@@ -123,10 +132,12 @@ public class LspServer {
 			sendNotification(r, "initialized", new JsonObject());
 			this.diagnosticsHandler = new LspDiagnosticsHandler(r);
 			ready = true;
+			statusField.setFieldValue("Connected");
 			LangCore.logInfo("serve-d connected");
 
 		} catch (IOException e) {
 			LangCore.logError("Failed to start serve-d (" + path + "): " + e.getMessage(), e);
+			statusField.setFieldValue("Failed: " + e.getMessage());
 			ready = false;
 		}
 	}
@@ -199,6 +210,7 @@ public class LspServer {
 
 	private synchronized void stopServer() {
 		ready = false;
+		statusField.setFieldValue("Not running");
 
 		if (diagnosticsHandler != null) {
 			diagnosticsHandler.clearAll();

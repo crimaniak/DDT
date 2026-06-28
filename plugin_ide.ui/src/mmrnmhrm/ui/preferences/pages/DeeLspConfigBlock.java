@@ -10,13 +10,21 @@
  *******************************************************************************/
 package mmrnmhrm.ui.preferences.pages;
 
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Label;
+
 import melnorme.lang.ide.core.DeeToolPreferences;
+import melnorme.lang.ide.core.LangCore_Actual;
 import melnorme.lang.ide.ui.preferences.AbstractCompositePreferencesBlock;
 import melnorme.lang.ide.ui.preferences.common.PreferencesPageContext;
+import melnorme.util.swt.SWTUtil;
 import melnorme.util.swt.components.AbstractGroupWidget;
 import melnorme.util.swt.components.fields.CheckBoxField;
 import melnorme.util.swt.components.fields.FileTextField;
 import melnorme.util.swt.components.fields.TextFieldWidget;
+import melnorme.utilbox.fields.IFieldView.FieldListenerRegistration;
 
 public class DeeLspConfigBlock extends AbstractCompositePreferencesBlock {
 
@@ -30,6 +38,9 @@ public class DeeLspConfigBlock extends AbstractCompositePreferencesBlock {
 		protected final CheckBoxField enabledField;
 		protected final FileTextField pathField;
 		protected final TextFieldWidget argsField;
+
+		private Label statusLabel;
+		private FieldListenerRegistration statusReg;
 
 		public LspGroup() {
 			super("Language Server (serve-d):", 3);
@@ -49,10 +60,40 @@ public class DeeLspConfigBlock extends AbstractCompositePreferencesBlock {
 			enabledField.addChangeListener(this::updateFieldsEnabledState);
 		}
 
+		@Override
+		protected void createContents(Composite topControl) {
+			super.createContents(topControl); // create all child widgets first
+			statusLabel = new Label(topControl, SWT.NONE);
+			statusLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+			statusReg = LangCore_Actual.getLspServer().getStatusField()
+					.registerChangeListener(true, () -> SWTUtil.runInSWTThread(this::refreshStatus));
+			topControl.addDisposeListener(e -> statusReg.dispose());
+		}
+
+		private void refreshStatus() {
+			if (statusLabel == null || statusLabel.isDisposed()) return;
+			boolean enabled = enabledField.getBooleanFieldValue();
+			if (!enabled) {
+				statusLabel.setText("");
+				return;
+			}
+			String status = LangCore_Actual.getLspServer().getStatusField().get();
+			statusLabel.setText("Status: " + status);
+			if ("Connected".equals(status)) {
+				statusLabel.setForeground(statusLabel.getDisplay().getSystemColor(SWT.COLOR_DARK_GREEN));
+			} else if (status.startsWith("Failed")) {
+				statusLabel.setForeground(statusLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
+			} else {
+				statusLabel.setForeground(statusLabel.getDisplay().getSystemColor(SWT.COLOR_DARK_YELLOW));
+			}
+			statusLabel.getParent().layout(true, true);
+		}
+
 		protected void updateFieldsEnabledState() {
 			boolean enabled = enabledField.getBooleanFieldValue();
 			pathField.setEnabled(enabled);
 			argsField.setEnabled(enabled);
+			refreshStatus();
 		}
 
 	}
