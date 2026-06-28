@@ -46,6 +46,7 @@ public class LspServer {
 	private volatile LspConnection connection;
 	private volatile LspMessageRouter router;
 	private volatile LspDiagnosticsHandler diagnosticsHandler;
+	private volatile JsonObject serverCapabilities = new JsonObject();
 
 	private LspTextSynchronizer textSync;
 
@@ -76,6 +77,11 @@ public class LspServer {
 
 	public IFieldView<String> getStatusField() {
 		return statusField;
+	}
+
+	/** Returns true if serve-d advertised the given top-level capability key. */
+	public boolean hasCapability(String key) {
+		return serverCapabilities.has(key);
 	}
 
 	/** Wire in the text synchronizer so it can be reset when serve-d restarts. */
@@ -130,12 +136,14 @@ public class LspServer {
 			this.connection = conn;
 			this.router = r;
 
-			sendInitialize(r);
+			JsonObject caps = sendInitialize(r);
+			this.serverCapabilities = caps != null ? caps : new JsonObject();
 			sendNotification(r, "initialized", new JsonObject());
 			this.diagnosticsHandler = new LspDiagnosticsHandler(r);
 			ready = true;
-			statusField.setFieldValue("Connected");
-			LangCore.logInfo("serve-d connected");
+			boolean hasCompletion = this.serverCapabilities.has("completionProvider");
+			statusField.setFieldValue(hasCompletion ? "Connected" : "Connected (no completion)");
+			LangCore.logInfo("serve-d connected" + (hasCompletion ? "" : " (DCD not available)"));
 
 		} catch (IOException e) {
 			LangCore.logError("Failed to start serve-d (" + path + "): " + e.getMessage(), e);
@@ -144,7 +152,8 @@ public class LspServer {
 		}
 	}
 
-	private void sendInitialize(LspMessageRouter r) throws IOException {
+	/** Returns the serverCapabilities object from the initialize response, or null on error. */
+	private JsonObject sendInitialize(LspMessageRouter r) throws IOException {
 		JsonObject params = new JsonObject();
 
 		// processId — lets serve-d exit if we crash
@@ -206,7 +215,14 @@ public class LspServer {
 		caps.add("textDocument", textDocCaps);
 		params.add("capabilities", caps);
 
-		r.sendRequest("initialize", params); // blocks until response or timeout
+		JsonObject response = r.sendRequest("initialize", params);
+		if (response != null && response.has("result")) {
+			JsonObject result = response.getAsJsonObject("result");
+			if (result.has("capabilities")) {
+				return result.getAsJsonObject("capabilities");
+			}
+		}
+		return null;
 	}
 
 	private void sendNotification(LspMessageRouter r, String method, JsonObject params) {

@@ -46,9 +46,9 @@ public class DeeCompletionProposalComputer extends LangCompletionProposalCompute
 	protected Indexable<ToolCompletionProposal> doComputeProposals(SourceOpContext sourceContext, ICancelMonitor cm)
 			throws CommonException, OperationCancellation, OperationSoftFailure {
 
-		// Try LSP backend first
+		// Try LSP backend first (only if serve-d advertised completionProvider)
 		LspServer lspServer = LangCore_Actual.getLspServer();
-		if (lspServer.isReady()) {
+		if (lspServer.isReady() && lspServer.hasCapability("completionProvider")) {
 			try {
 				Location fileLocation = sourceContext.getFileLocation();
 				String uri = fileLocation.toUri().toString();
