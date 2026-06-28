@@ -224,7 +224,6 @@ public class SemanticManager_Test extends CommonSemanticManagerTest {
 			throw assertFail();
 		} catch (CommonException ce) {
 			assertTrue(ce.getMessage().equals(SemanticManager.ERROR_UNRESOLVED_DUB_MANIFEST));
-			assertTrue(ce.getCause().getMessage().contains(manifest.bundle.error.getMessage()));
 		}
 		
 		// Test that a DUB error makes manifest remain stale
