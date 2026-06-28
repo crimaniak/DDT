@@ -12,6 +12,7 @@ package mmrnmhrm.ui.actions;
 
 import static melnorme.utilbox.core.CoreUtil.areEqual;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.function.Function;
 
@@ -22,6 +23,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import dtool.engine.operations.FindDefinitionResult;
 import dtool.engine.operations.FindDefinitionResult.FindDefinitionResultEntry;
 import melnorme.lang.ide.core.LangCore;
+import melnorme.lang.ide.core.LangCore_Actual;
 import melnorme.lang.ide.core.utils.EclipseUtils;
 import melnorme.lang.ide.ui.EditorSettings_Actual;
 import melnorme.lang.ide.ui.editor.EditorUtils;
@@ -36,6 +38,8 @@ import melnorme.utilbox.misc.Location;
 import melnorme.utilbox.misc.StringUtil;
 import melnorme.utilbox.status.Severity;
 import mmrnmhrm.core.engine.DeeLanguageEngine;
+import mmrnmhrm.core.lsp.LspFeatureSupport;
+import mmrnmhrm.core.lsp.LspServer;
 
 public class DeeOpenDefinitionOperation extends AbstractEditorOperation2<FindDefinitionResult> {
 	
@@ -65,10 +69,26 @@ public class DeeOpenDefinitionOperation extends AbstractEditorOperation2<FindDef
 	@Override
 	protected FindDefinitionResult doBackgroundValueComputation(IOperationMonitor monitor)
 			throws CommonException, OperationCancellation {
+
+		// Try LSP backend first
+		LspServer lspServer = LangCore_Actual.getLspServer();
+		if (lspServer.isReady()) {
+			try {
+				Location fileLocation = getInputLocation();
+				String uri = fileLocation.toUri().toString();
+				FindDefinitionResult lspResult = LspFeatureSupport.requestDefinition(
+						lspServer.getRouter(), uri, getSource(), offset);
+				if (lspResult != null) return lspResult;
+			} catch (IOException | CommonException e) {
+				LangCore.logWarning("LSP definition failed, falling back to embedded: " + e.getMessage());
+			}
+		}
+
+		// Embedded engine fallback
 		IProject associatedProject = getAssociatedProject();
 		String dubPath = LangCore.settings().SDK_LOCATION.getValue(associatedProject).toString();
-		return DeeLanguageEngine.getDefault().
-				new FindDefinitionOperation(getInputLocation(), offset, -1, dubPath).runEngineOperation(monitor);
+		return DeeLanguageEngine.getDefault()
+				.new FindDefinitionOperation(getInputLocation(), offset, -1, dubPath).runEngineOperation(monitor);
 	}
 	
 	@Override

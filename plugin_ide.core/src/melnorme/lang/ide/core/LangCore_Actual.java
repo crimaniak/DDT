@@ -19,6 +19,7 @@ import mmrnmhrm.core.engine.DeeLanguageEngine;
 import mmrnmhrm.core.engine.DeeLanguageServerHandler;
 import mmrnmhrm.core.engine.DeeSourceModelManager;
 import mmrnmhrm.core.engine.DeeToolManager;
+import mmrnmhrm.core.lsp.LspServer;
 
 public class LangCore_Actual extends AbstractLangCore {
 	
@@ -86,6 +87,10 @@ public class LangCore_Actual extends AbstractLangCore {
 		return new DeeBuildManager(deeBundleModelManager().getModel(), deeToolManager());
 	}
 	
+	public static LspServer getLspServer() {
+		return deeLanguageEngineManager().getLspServer();
+	}
+
 	public static DeeSourceModelManager createSourceModelManager() {
 		DeeLanguageServerHandler handler = deeLanguageEngineManager();
 		return new DeeSourceModelManager(deeLanguageEngine(),

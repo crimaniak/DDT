@@ -19,6 +19,7 @@ import java.util.List;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import melnorme.lang.ide.core.DeeToolPreferences;
@@ -150,15 +151,37 @@ public class LspServer {
 			params.add("rootUri", com.google.gson.JsonNull.INSTANCE);
 		}
 
-		// Minimal client capabilities for Phase 2 (extended in later phases)
 		JsonObject textDocCaps = new JsonObject();
+
 		JsonObject syncCaps = new JsonObject();
 		syncCaps.addProperty("dynamicRegistration", false);
 		syncCaps.addProperty("didSave", true);
 		textDocCaps.add("synchronization", syncCaps);
+
 		JsonObject diagCaps = new JsonObject();
 		diagCaps.addProperty("relatedInformation", false);
 		textDocCaps.add("publishDiagnostics", diagCaps);
+
+		JsonObject completionCaps = new JsonObject();
+		completionCaps.addProperty("dynamicRegistration", false);
+		JsonObject completionItemCaps = new JsonObject();
+		completionItemCaps.addProperty("snippetSupport", false);
+		completionCaps.add("completionItem", completionItemCaps);
+		textDocCaps.add("completion", completionCaps);
+
+		JsonObject hoverCaps = new JsonObject();
+		hoverCaps.addProperty("dynamicRegistration", false);
+		JsonArray hoverFormats = new JsonArray();
+		hoverFormats.add("plaintext");
+		hoverFormats.add("markdown");
+		hoverCaps.add("contentFormat", hoverFormats);
+		textDocCaps.add("hover", hoverCaps);
+
+		JsonObject definitionCaps = new JsonObject();
+		definitionCaps.addProperty("dynamicRegistration", false);
+		definitionCaps.addProperty("linkSupport", false);
+		textDocCaps.add("definition", definitionCaps);
+
 		JsonObject caps = new JsonObject();
 		caps.add("textDocument", textDocCaps);
 		params.add("capabilities", caps);
