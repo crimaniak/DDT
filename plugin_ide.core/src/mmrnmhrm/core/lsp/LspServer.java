@@ -121,6 +121,8 @@ public class LspServer {
 
 			// Two-phase init to break the router↔connection cycle:
 			// router needs connection to send; connection needs router.handleMessage to dispatch.
+			startStderrLogger(proc);
+
 			LspMessageRouter r = new LspMessageRouter();
 			LspConnection conn = new LspConnection(proc.getInputStream(), proc.getOutputStream(),
 					r::handleMessage, this::onReaderDisconnected);
@@ -206,6 +208,22 @@ public class LspServer {
 		} catch (IOException e) {
 			LangCore.logWarning("serve-d notification '" + method + "' failed: " + e.getMessage());
 		}
+	}
+
+	private static void startStderrLogger(Process proc) {
+		Thread t = new Thread(() -> {
+			try (java.io.BufferedReader br = new java.io.BufferedReader(
+					new java.io.InputStreamReader(proc.getErrorStream(), java.nio.charset.StandardCharsets.UTF_8))) {
+				String line;
+				while ((line = br.readLine()) != null) {
+					LangCore.logInfo("serve-d: " + line);
+				}
+			} catch (java.io.IOException e) {
+				// process gone, nothing to do
+			}
+		}, "serve-d stderr");
+		t.setDaemon(true);
+		t.start();
 	}
 
 	private void onReaderDisconnected() {
