@@ -61,15 +61,23 @@ public class ProblemMarkerUpdater extends LifecycleObject {
 		super.dispose_post();
 	}
 	
+	/** Override to suppress embedded parser markers when an external backend is active. */
+	protected boolean shouldUpdateMarkers(StructureInfo structureInfo) {
+		return true;
+	}
+
 	protected final IStructureModelListener problemUpdaterListener = new IStructureModelListener() {
 		@Override
 		public void dataChanged(StructureInfo structureInfo) {
 			Location location = structureInfo.getLocation();
 			if(location == null)
 				return;
-			
+
+			if(!shouldUpdateMarkers(structureInfo))
+				return;
+
 			assertTrue(Job.getJobManager().currentRule() == null);
-			
+
 			UpdateProblemMarkersTask task;
 			try {
 				task = new UpdateProblemMarkersTask(structureInfo);

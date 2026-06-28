@@ -28,6 +28,7 @@ public class LangCore_Actual extends AbstractLangCore {
 	public static final String BUILDER_ID = PLUGIN_ID + ".DubBuilder";
 	public static final String BUILD_PROBLEM_ID = PLUGIN_ID + ".build_problem";
 	public static final String SOURCE_PROBLEM_ID = PLUGIN_ID + ".source_problem";
+	public static final String LSP_PROBLEM_ID = PLUGIN_ID + ".lsp_problem";
 	
 	// Note: the variable should not be named with a prefix of LANGUAGE, 
 	// or it will interfere with MelnormeEclipse templating
@@ -86,8 +87,9 @@ public class LangCore_Actual extends AbstractLangCore {
 	}
 	
 	public static DeeSourceModelManager createSourceModelManager() {
+		DeeLanguageServerHandler handler = deeLanguageEngineManager();
 		return new DeeSourceModelManager(deeLanguageEngine(),
-				deeLanguageEngineManager().getLspTextSync());
+				handler.getLspServer(), handler.getLspTextSync());
 	}
 	public static DeeSourceModelManager deeSourceModelManager() {
 		return (DeeSourceModelManager) instance.sourceModelManager;

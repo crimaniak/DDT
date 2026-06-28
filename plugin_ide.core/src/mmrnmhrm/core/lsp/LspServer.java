@@ -43,6 +43,7 @@ public class LspServer {
 	private volatile Process process;
 	private volatile LspConnection connection;
 	private volatile LspMessageRouter router;
+	private volatile LspDiagnosticsHandler diagnosticsHandler;
 
 	private LspTextSynchronizer textSync;
 
@@ -119,6 +120,7 @@ public class LspServer {
 
 			sendInitialize(r);
 			sendNotification(r, "initialized", new JsonObject());
+			this.diagnosticsHandler = new LspDiagnosticsHandler(r);
 			ready = true;
 			LangCore.logInfo("serve-d connected");
 
@@ -174,6 +176,11 @@ public class LspServer {
 
 	private synchronized void stopServer() {
 		ready = false;
+
+		if (diagnosticsHandler != null) {
+			diagnosticsHandler.clearAll();
+			diagnosticsHandler = null;
+		}
 
 		if (textSync != null) {
 			textSync.reset(); // clear stale open-file state before serve-d exits

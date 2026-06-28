@@ -19,10 +19,14 @@ import dtool.engine.ModuleParseCache.CachedModuleEntry;
 import dtool.engine.SemanticManager;
 import dtool.parser.DeeParserResult.ParsedModule;
 import dtool.parser.structure.DeeStructureCreator;
+import melnorme.lang.ide.core.engine.DocumentReconcileManager;
+import melnorme.lang.ide.core.engine.ProblemMarkerUpdater;
 import melnorme.lang.ide.core.engine.SourceModelManager;
+import melnorme.lang.ide.core.engine.SourceModelManager.StructureInfo;
 import melnorme.lang.tooling.structure.SourceFileStructure;
 import melnorme.utilbox.concurrency.OperationCancellation;
 import melnorme.utilbox.misc.Location;
+import mmrnmhrm.core.lsp.LspServer;
 import mmrnmhrm.core.lsp.LspTextSynchronizer;
 
 public class DeeSourceModelManager extends SourceModelManager {
@@ -31,15 +35,26 @@ public class DeeSourceModelManager extends SourceModelManager {
 	private final LspTextSynchronizer lspSync;
 
 	public DeeSourceModelManager() {
-		this(DeeLanguageEngine.getDefault(), null);
+		this(DeeLanguageEngine.getDefault(), null, null);
 	}
 
 	public DeeSourceModelManager(DeeLanguageEngine languageEngine) {
-		this(languageEngine, null);
+		this(languageEngine, null, null);
 	}
 
 	public DeeSourceModelManager(DeeLanguageEngine languageEngine, LspTextSynchronizer lspSync) {
-		super();
+		this(languageEngine, null, lspSync);
+	}
+
+	public DeeSourceModelManager(DeeLanguageEngine languageEngine, LspServer lspServer,
+			LspTextSynchronizer lspSync) {
+		super(new DocumentReconcileManager(), lspServer == null ? new ProblemMarkerUpdater()
+				: new ProblemMarkerUpdater() {
+					@Override
+					protected boolean shouldUpdateMarkers(StructureInfo structureInfo) {
+						return !lspServer.isReady();
+					}
+				});
 		this.languageEngine = assertNotNull(languageEngine);
 		this.lspSync = lspSync;
 	}
