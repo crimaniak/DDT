@@ -89,6 +89,11 @@ public class DeeLspConfigBlock extends AbstractCompositePreferencesBlock {
 			statusLabel.getParent().layout(true, true);
 		}
 
+		@Override
+		protected void doSetEnabled(boolean enabled) {
+			super.doSetEnabled(enabled);
+		}
+
 		protected void updateFieldsEnabledState() {
 			boolean enabled = enabledField.getBooleanFieldValue();
 			pathField.setEnabled(enabled);
