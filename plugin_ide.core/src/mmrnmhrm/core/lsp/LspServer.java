@@ -155,11 +155,18 @@ public class LspServer {
 			params.addProperty("processId", (Integer) null);
 		}
 
-		// rootUri — Eclipse workspace location
+		// rootUri — Eclipse workspace location.
+		// File.toURI() on Linux produces "file:/path" (one slash); serve-d requires
+		// "file:///path" (three slashes). Use empty-string authority to force the //
+		// separator: new URI("file", "", path, null) → "file:///path".
 		IPath wsPath = ResourcesPlugin.getWorkspace().getRoot().getLocation();
 		if (wsPath != null) {
-			URI uri = wsPath.toFile().toURI();
-			params.addProperty("rootUri", uri.toString());
+			try {
+				URI uri = new URI("file", "", wsPath.toOSString(), null);
+				params.addProperty("rootUri", uri.toString());
+			} catch (java.net.URISyntaxException e) {
+				params.add("rootUri", com.google.gson.JsonNull.INSTANCE);
+			}
 		} else {
 			params.add("rootUri", com.google.gson.JsonNull.INSTANCE);
 		}
