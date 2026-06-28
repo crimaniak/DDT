@@ -275,6 +275,8 @@
 		                            label="%DaemonToolPrefPage.keywords"/>
 		<keyword id="org.dsource.ddt.ide.ui.ToolsConsolePrefPage"
 		                            label="%ToolsConsolePrefPage.keywords"/>
+		<keyword id="org.dsource.ddt.ide.ui.LanguageServerPreferencePage"
+		                            label="%LanguageServerPrefPage.keywords"/>
 	</extension>
 	
 	
@@ -337,6 +339,14 @@
             name="%EditorFoldingPreferencePage.name">
 			<keywordReference id="org.dsource.ddt.ide.ui.EditorFoldingPreferencePage"/>
       </page>
+
+		<page
+			category="org.dsource.ddt.ide.ui.PreferencePages.Root"
+			id=      "org.dsource.ddt.ide.ui.PreferencePages.LanguageServer"
+			class="mmrnmhrm.ui.preferences.pages.DeeLspPreferencePage"
+			name="%LanguageServerPrefPage.name">
+			<keywordReference id="org.dsource.ddt.ide.ui.LanguageServerPreferencePage"/>
+		</page>
 	</extension>
 	
 	<extension point="org.eclipse.ui.propertyPages">

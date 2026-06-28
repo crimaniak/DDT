@@ -13,13 +13,19 @@ package melnorme.lang.ide.core;
 import java.nio.file.Path;
 
 import melnorme.lang.ide.core.operations.ToolchainPreferences;
+import melnorme.lang.ide.core.utils.prefs.BooleanPreference;
 import melnorme.lang.ide.core.utils.prefs.DerivedValuePreference;
+import melnorme.lang.ide.core.utils.prefs.StringPreference;
 import melnorme.lang.utils.validators.LocationOrSinglePathValidator;
 
 public interface DeeToolPreferences extends ToolchainPreferences {
-	
-	public static final DerivedValuePreference<Path> DFMT_PATH = new DerivedValuePreference<>( 
+
+	public static final DerivedValuePreference<Path> DFMT_PATH = new DerivedValuePreference<>(
 			"dfmt_path", "", ToolchainPreferences.USE_PROJECT_SETTINGS,
 		new LocationOrSinglePathValidator("dfmt:"));
-	
+
+	public static final BooleanPreference LSP_ENABLED = new BooleanPreference("lsp.enabled", false);
+	public static final StringPreference LSP_PATH = new StringPreference("lsp.path", "");
+	public static final StringPreference LSP_ARGS = new StringPreference("lsp.args", "");
+
 }
