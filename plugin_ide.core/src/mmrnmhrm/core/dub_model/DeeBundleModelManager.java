@@ -15,7 +15,16 @@ import static melnorme.lang.ide.core.utils.TextMessageUtils.headerBIG;
 import static melnorme.utilbox.core.Assert.AssertNamespace.assertNotNull;
 import static melnorme.utilbox.core.Assert.AssertNamespace.assertTrue;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.MessageFormat;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -301,8 +310,16 @@ class ProjectModelDubDescribeTask extends ProjectUpdateBuildpathTask implements 
 			return null; // Project no longer exists, or not stored in the local filesystem.
 		}
 		
-		BundlePath bundlePath = BundlePath.create(projectLocation.toFile().toPath());
-			
+		Path projectDir = projectLocation.toFile().toPath();
+
+		if (isSubpackageOfParent(projectDir)) {
+			LangCore.logInfo("Skipping 'dub describe' for " + project.getName() +
+				": directory is a declared subpackage of parent dub project");
+			return null;
+		}
+
+		BundlePath bundlePath = BundlePath.create(projectDir);
+
 		String dubPath = getToolManager().getSDKToolPath(project).toString();
 		
 		IToolOperationMonitor opMonitor = getToolManager().startNewOperation(ENGINE_TOOLS, true, false);
@@ -360,6 +377,85 @@ class ProjectModelDubDescribeTask extends ProjectUpdateBuildpathTask implements 
 		return new DubBundleDescription(mainBundle, describedBundle.getBundleDependencies());
 	}
 	
+	/**
+	 * Returns true if {@code projectDir} is declared as a {@code subPackage} in the parent
+	 * directory's dub manifest (dub.sdl or dub.json). When this is the case, running
+	 * "dub describe" inside the subpackage directory fails because it lacks the parent's
+	 * dependency selections and context.
+	 */
+	private static boolean isSubpackageOfParent(Path projectDir) {
+		Path parentDir = projectDir.getParent();
+		if (parentDir == null) return false;
+		String dirName = projectDir.getFileName().toString();
+
+		Path sdlPath = parentDir.resolve("dub.sdl");
+		if (Files.isRegularFile(sdlPath)) {
+			try {
+				String content = new String(Files.readAllBytes(sdlPath), StandardCharsets.UTF_8);
+				if (sdlListsSubpackage(content, dirName)) return true;
+			} catch (IOException e) { /* ignore, treat as not a subpackage */ }
+		}
+
+		Path jsonPath = parentDir.resolve("dub.json");
+		if (Files.isRegularFile(jsonPath)) {
+			try {
+				String content = new String(Files.readAllBytes(jsonPath), StandardCharsets.UTF_8);
+				if (jsonListsSubpackage(content, dirName)) return true;
+			} catch (IOException e) { /* ignore */ }
+		}
+
+		return false;
+	}
+
+	private static boolean sdlListsSubpackage(String sdlContent, String dirName) {
+		for (String line : sdlContent.split("\\r?\\n")) {
+			String trimmed = line.trim();
+			if (!trimmed.toLowerCase().startsWith("subpackage")) continue;
+			// Extract first quoted value: subPackage "http"
+			int q1 = trimmed.indexOf('"');
+			int q2 = trimmed.lastIndexOf('"');
+			if (q1 >= 0 && q2 > q1) {
+				String val = trimmed.substring(q1 + 1, q2);
+				// Match "http" or "some/path/http"
+				if (val.equals(dirName) || val.endsWith("/" + dirName) || val.endsWith("\\" + dirName)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	@SuppressWarnings("deprecation")
+	private static boolean jsonListsSubpackage(String jsonContent, String dirName) {
+		try {
+			JsonElement root = new JsonParser().parse(jsonContent);
+			if (!root.isJsonObject()) return false;
+			JsonObject obj = root.getAsJsonObject();
+			if (!obj.has("subPackages")) return false;
+			JsonElement sp = obj.get("subPackages");
+			if (!sp.isJsonArray()) return false;
+			JsonArray arr = sp.getAsJsonArray();
+			for (JsonElement elem : arr) {
+				if (elem.isJsonPrimitive()) {
+					String val = elem.getAsString();
+					if (val.equals(dirName) || val.endsWith("/" + dirName) || val.endsWith("\\" + dirName)) {
+						return true;
+					}
+				} else if (elem.isJsonObject()) {
+					// Inline subpackage object with optional "path" field
+					JsonObject sub = elem.getAsJsonObject();
+					if (sub.has("path")) {
+						String val = sub.get("path").getAsString();
+						if (val.equals(dirName) || val.endsWith("/" + dirName) || val.endsWith("\\" + dirName)) {
+							return true;
+						}
+					}
+				}
+			}
+		} catch (Exception e) { /* malformed JSON, ignore */ }
+		return false;
+	}
+
 	protected void setProjectDubError(IProject project, CommonException ce) throws CoreException {
 		
 		DubBundleException dubError = new DubBundleException(ce.getMessage(), ce.getCause());
