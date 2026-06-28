@@ -39,8 +39,11 @@ public class LspConnection {
 	@SuppressWarnings("deprecation")
 	private static final JsonParser PARSER = new JsonParser();
 
-	public LspConnection(InputStream in, OutputStream out, Consumer<JsonObject> handler) {
+	private final Runnable onDisconnected;
+
+	public LspConnection(InputStream in, OutputStream out, Consumer<JsonObject> handler, Runnable onDisconnected) {
 		this.out = out;
+		this.onDisconnected = onDisconnected;
 		this.readerThread = new Thread(() -> readerLoop(in, handler), "serve-d reader");
 		this.readerThread.setDaemon(true);
 		this.readerThread.start();
@@ -58,6 +61,7 @@ public class LspConnection {
 		} catch (IOException e) {
 			if (!closed) {
 				LangCore.logError("serve-d reader terminated unexpectedly", e);
+				onDisconnected.run();
 			}
 		}
 	}

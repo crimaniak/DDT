@@ -123,7 +123,7 @@ public class LspServer {
 			// router needs connection to send; connection needs router.handleMessage to dispatch.
 			LspMessageRouter r = new LspMessageRouter();
 			LspConnection conn = new LspConnection(proc.getInputStream(), proc.getOutputStream(),
-					r::handleMessage);
+					r::handleMessage, this::onReaderDisconnected);
 			r.setConnection(conn);
 			this.connection = conn;
 			this.router = r;
@@ -206,6 +206,17 @@ public class LspServer {
 		} catch (IOException e) {
 			LangCore.logWarning("serve-d notification '" + method + "' failed: " + e.getMessage());
 		}
+	}
+
+	private void onReaderDisconnected() {
+		// Called from the reader thread — run cleanup on a separate thread to avoid
+		// re-entering the lock from the thread being stopped.
+		Thread t = new Thread(() -> {
+			LangCore.logInfo("serve-d disconnected, cleaning up");
+			stopServer();
+		}, "serve-d cleanup");
+		t.setDaemon(true);
+		t.start();
 	}
 
 	private synchronized void stopServer() {
