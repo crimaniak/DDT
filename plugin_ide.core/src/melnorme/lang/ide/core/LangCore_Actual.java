@@ -86,7 +86,8 @@ public class LangCore_Actual extends AbstractLangCore {
 	}
 	
 	public static DeeSourceModelManager createSourceModelManager() {
-		return new DeeSourceModelManager(deeLanguageEngine());
+		return new DeeSourceModelManager(deeLanguageEngine(),
+				deeLanguageEngineManager().getLspTextSync());
 	}
 	public static DeeSourceModelManager deeSourceModelManager() {
 		return (DeeSourceModelManager) instance.sourceModelManager;

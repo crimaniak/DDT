@@ -44,6 +44,8 @@ public class LspServer {
 	private volatile LspConnection connection;
 	private volatile LspMessageRouter router;
 
+	private LspTextSynchronizer textSync;
+
 	private final FieldListenerRegistration enabledListener;
 	private final FieldListenerRegistration pathListener;
 
@@ -65,6 +67,11 @@ public class LspServer {
 
 	public LspMessageRouter getRouter() {
 		return router;
+	}
+
+	/** Wire in the text synchronizer so it can be reset when serve-d restarts. */
+	public void setTextSynchronizer(LspTextSynchronizer textSync) {
+		this.textSync = textSync;
 	}
 
 	private void onSettingsChanged() {
@@ -167,6 +174,10 @@ public class LspServer {
 
 	private synchronized void stopServer() {
 		ready = false;
+
+		if (textSync != null) {
+			textSync.reset(); // clear stale open-file state before serve-d exits
+		}
 
 		if (router != null) {
 			try {

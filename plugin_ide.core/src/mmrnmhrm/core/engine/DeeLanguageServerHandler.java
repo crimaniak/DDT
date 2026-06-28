@@ -12,11 +12,19 @@ package mmrnmhrm.core.engine;
 
 import melnorme.lang.ide.core.engine.ILanguageServerHandler;
 import mmrnmhrm.core.lsp.LspServer;
+import mmrnmhrm.core.lsp.LspTextSynchronizer;
 
 public class DeeLanguageServerHandler implements ILanguageServerHandler  {
 
 	protected final DeeLanguageEngine languageEngine = new DeeLanguageEngine();
-	protected final LspServer lspServer = new LspServer();
+	protected final LspServer lspServer;
+	protected final LspTextSynchronizer lspTextSync;
+
+	public DeeLanguageServerHandler() {
+		lspServer = new LspServer();
+		lspTextSync = new LspTextSynchronizer(lspServer);
+		lspServer.setTextSynchronizer(lspTextSync);
+	}
 
 	@Override
 	public void dispose() {
@@ -29,6 +37,10 @@ public class DeeLanguageServerHandler implements ILanguageServerHandler  {
 
 	public LspServer getLspServer() {
 		return lspServer;
+	}
+
+	public LspTextSynchronizer getLspTextSync() {
+		return lspTextSync;
 	}
 
 }
