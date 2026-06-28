@@ -139,6 +139,7 @@ public class LspServer {
 			JsonObject caps = sendInitialize(r);
 			this.serverCapabilities = caps != null ? caps : new JsonObject();
 			sendNotification(r, "initialized", new JsonObject());
+			sendCompilerConfiguration(r);
 			this.diagnosticsHandler = new LspDiagnosticsHandler(r);
 			ready = true;
 			boolean hasCompletion = this.serverCapabilities.has("completionProvider");
@@ -164,21 +165,12 @@ public class LspServer {
 			params.addProperty("processId", (Integer) null);
 		}
 
-		// rootUri — Eclipse workspace location.
-		// File.toURI() on Linux produces "file:/path" (one slash); serve-d requires
-		// "file:///path" (three slashes). Use empty-string authority to force the //
-		// separator: new URI("file", "", path, null) → "file:///path".
-		IPath wsPath = ResourcesPlugin.getWorkspace().getRoot().getLocation();
-		if (wsPath != null) {
-			try {
-				URI uri = new URI("file", "", wsPath.toOSString(), null);
-				params.addProperty("rootUri", uri.toString());
-			} catch (java.net.URISyntaxException e) {
-				params.add("rootUri", com.google.gson.JsonNull.INSTANCE);
-			}
-		} else {
-			params.add("rootUri", com.google.gson.JsonNull.INSTANCE);
-		}
+		// rootUri — intentionally null. If we pass the Eclipse workspace folder, serve-d
+		// treats it as the sole D project, runs "dub describe" there (no dub.json →
+		// no import paths), and never discovers the real per-file project roots.
+		// With null, serve-d enters per-file detection mode: when a D file is opened it
+		// walks up to the nearest dub.json and initialises a proper project instance.
+		params.add("rootUri", com.google.gson.JsonNull.INSTANCE);
 
 		JsonObject textDocCaps = new JsonObject();
 
@@ -231,6 +223,21 @@ public class LspServer {
 		} catch (IOException e) {
 			LangCore.logWarning("serve-d notification '" + method + "' failed: " + e.getMessage());
 		}
+	}
+
+	private void sendCompilerConfiguration(LspMessageRouter r) {
+		// Push compiler settings so serve-d's stdlib auto-detection uses ldc2.
+		// Without this, serve-d defaults to "dmd" which is not installed here.
+		// serve-d reads workspace/didChangeConfiguration settings.d.dubCompiler
+		// and passes it to autoDetectStdlibPaths(), which then finds /etc/ldc2.conf.
+		JsonObject dConfig = new JsonObject();
+		dConfig.addProperty("dubCompiler", "ldc2");
+		dConfig.addProperty("dmdPath", "ldmd2");
+		JsonObject settings = new JsonObject();
+		settings.add("d", dConfig);
+		JsonObject params = new JsonObject();
+		params.add("settings", settings);
+		sendNotification(r, "workspace/didChangeConfiguration", params);
 	}
 
 	private static void startStderrLogger(Process proc) {
