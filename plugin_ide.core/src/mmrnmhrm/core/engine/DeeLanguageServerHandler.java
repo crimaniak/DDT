@@ -68,25 +68,33 @@ public class DeeLanguageServerHandler implements ILanguageServerHandler  {
 	private void pushAllProjectPaths() {
 		for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
 			BundleInfo info = LangCore.getBundleModel().getBundleInfo(project);
-			if (info != null && !info.hasErrors()) {
+			if (info != null) {
 				pushImportPathsForProject(project, info);
 			}
 		}
 	}
 
 	private void pushImportPathsForProject(IProject project, BundleInfo bundleInfo) {
-		if (bundleInfo.hasErrors() || !bundleInfo.isResolved()) return;
-
 		List<String> paths = new ArrayList<>();
 		DubBundleDescription bundleDesc = bundleInfo.getBundleDesc();
 
-		for (Location loc : bundleDesc.getMainBundle().getEffectiveImportFolders_AbsolutePath()) {
-			paths.add(loc.toPathString());
-		}
-		for (DubBundle dep : bundleDesc.getBundleDependencies()) {
-			if (dep.hasErrors()) continue;
-			for (Location loc : dep.getEffectiveImportFolders_AbsolutePath()) {
+		// Always push the main bundle's source paths, even when dependency resolution
+		// failed. The main bundle is populated from the manifest (SDL/JSON) parsing, so
+		// its source folders are available even when dub describe couldn't run fully.
+		DubBundle mainBundle = bundleDesc.getMainBundle();
+		if (!mainBundle.hasErrors()) {
+			for (Location loc : mainBundle.getEffectiveImportFolders_AbsolutePath()) {
 				paths.add(loc.toPathString());
+			}
+		}
+
+		// Dependency paths are only available when fully resolved.
+		if (bundleInfo.isResolved()) {
+			for (DubBundle dep : bundleDesc.getBundleDependencies()) {
+				if (dep.hasErrors()) continue;
+				for (Location loc : dep.getEffectiveImportFolders_AbsolutePath()) {
+					paths.add(loc.toPathString());
+				}
 			}
 		}
 
