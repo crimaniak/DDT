@@ -75,7 +75,7 @@ public class DeeOpenDefinitionOperation extends AbstractEditorOperation2<FindDef
 		if (lspServer.isReady()) {
 			try {
 				Location fileLocation = getInputLocation();
-				String uri = fileLocation.toUri().toString();
+				String uri = LspFeatureSupport.fileUri(fileLocation);
 				FindDefinitionResult lspResult = LspFeatureSupport.requestDefinition(
 						lspServer.getRouter(), uri, getSource(), offset);
 				if (lspResult != null) return lspResult;

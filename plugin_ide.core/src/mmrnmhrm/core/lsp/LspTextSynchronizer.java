@@ -11,6 +11,12 @@
 package mmrnmhrm.core.lsp;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -37,6 +43,8 @@ public class LspTextSynchronizer {
 	private final LspServer lspServer;
 	/** URI → monotonically increasing version. Entry absent = file not open in LSP. */
 	private final ConcurrentHashMap<String, AtomicInteger> openFiles = new ConcurrentHashMap<>();
+	/** Workspace folder URIs already registered with serve-d. Cleared on reset(). */
+	private final Set<String> registeredRoots = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 	public LspTextSynchronizer(LspServer lspServer) {
 		this.lspServer = lspServer;
@@ -53,6 +61,7 @@ public class LspTextSynchronizer {
 		if (router == null) return;
 
 		String uri = toUri(location);
+		ensureWorkspaceFolder(router, location.toPath());
 		AtomicInteger counter = openFiles.computeIfAbsent(uri, k -> new AtomicInteger(0));
 		int version = counter.incrementAndGet();
 
@@ -118,6 +127,7 @@ public class LspTextSynchronizer {
 	 */
 	public void reset() {
 		openFiles.clear();
+		registeredRoots.clear();
 	}
 
 	/* -----------------  ----------------- */
@@ -128,7 +138,75 @@ public class LspTextSynchronizer {
 	}
 
 	private static String toUri(Location location) {
-		return location.toUri().toString();
+		return LspFeatureSupport.fileUri(location);
+	}
+
+	/**
+	 * Notify serve-d about the dub project root containing {@code filePath} if not already registered.
+	 * serve-d requires at least one workspace folder to create project instances for completion/hover/etc.
+	 * We send {@code workspace/didChangeWorkspaceFolders} the first time a file from a new project root
+	 * is opened. For sub-packages, we walk up to the parent project root so serve-d's scanAllFolders
+	 * can discover the sub-package structure from there.
+	 */
+	private void ensureWorkspaceFolder(LspMessageRouter router, Path filePath) {
+		Path root = findDubProjectRoot(filePath);
+		if (root == null) return;
+		String rootUri;
+		try {
+			rootUri = new URI("file", "", root.toAbsolutePath().toString(), null).toString();
+		} catch (URISyntaxException e) {
+			return;
+		}
+		if (!registeredRoots.add(rootUri)) return; // already registered
+
+		JsonObject folder = new JsonObject();
+		folder.addProperty("uri", rootUri);
+		folder.addProperty("name", root.getFileName().toString());
+		JsonArray added = new JsonArray();
+		added.add(folder);
+		JsonObject event = new JsonObject();
+		event.add("added", added);
+		event.add("removed", new JsonArray());
+		JsonObject params = new JsonObject();
+		params.add("event", event);
+		try {
+			router.sendNotification("workspace/didChangeWorkspaceFolders", params);
+			LangCore.logInfo("Registered workspace folder with serve-d: " + root);
+		} catch (IOException e) {
+			registeredRoots.remove(rootUri); // allow retry
+			LangCore.logWarning("workspace/didChangeWorkspaceFolders failed: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Walk up from {@code filePath} to find the outermost applicable dub project root.
+	 * "Outermost" means: if the nearest dub manifest is itself a declared subPackage of the
+	 * parent directory, use the parent — serve-d will discover the sub-packages via scanAllFolders.
+	 */
+	static Path findDubProjectRoot(Path filePath) {
+		Path dir = filePath.getParent();
+		Path nearest = null;
+		while (dir != null) {
+			if (Files.exists(dir.resolve("dub.json")) || Files.exists(dir.resolve("dub.sdl"))
+					|| Files.exists(dir.resolve("dub.recipe"))) {
+				nearest = dir;
+				break;
+			}
+			dir = dir.getParent();
+		}
+		if (nearest == null) return null;
+
+		// If the nearest root is a sub-package of its parent, return the parent so
+		// serve-d can run dub describe on the top-level project instead.
+		Path parent = nearest.getParent();
+		if (parent != null) {
+			if (Files.exists(parent.resolve("dub.json")) || Files.exists(parent.resolve("dub.sdl"))
+					|| Files.exists(parent.resolve("dub.recipe"))) {
+				// Parent also has a dub manifest — use it (it's the real project root)
+				return parent;
+			}
+		}
+		return nearest;
 	}
 
 	private static void sendDidOpen(LspMessageRouter router, String uri, String source, int version)

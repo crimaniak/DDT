@@ -21,6 +21,7 @@ import melnorme.lang.ide.ui.text.DocumentationHoverCreator;
 import melnorme.lang.tooling.ToolCompletionProposal;
 import melnorme.lang.tooling.symbols.INamedElement;
 import melnorme.lang.tooling.toolchain.ops.SourceOpContext;
+import mmrnmhrm.core.lsp.LspFeatureSupport;
 
 public class DeeContentAssistProposal extends AbstractScriptCompletionProposal {
 	
@@ -33,7 +34,19 @@ public class DeeContentAssistProposal extends AbstractScriptCompletionProposal {
 	
 	@Override
 	public String getProposalInfoString(IProgressMonitor monitor) {
-		return TextUI.getDDocHTMLRender(namedElement); /* TODO: remove dependency on namedElement */
+		if (namedElement == null) {
+			// LSP-sourced proposal — namedElement not available; use LSP-supplied documentation
+			String doc = proposal.getDocumentation();
+			if (doc != null && !doc.isEmpty()) {
+				return LspFeatureSupport.markdownToHtml(doc);
+			}
+			String typeLabel = proposal.getTypeLabel();
+			if (typeLabel != null && !typeLabel.isEmpty()) {
+				return "<code>" + typeLabel.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") + "</code>";
+			}
+			return null;
+		}
+		return TextUI.getDDocHTMLRender(namedElement);
 	}
 	
 	@Override

@@ -12,6 +12,7 @@ package mmrnmhrm.core.lsp;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import com.google.gson.JsonObject;
 import dtool.engine.operations.FindDefinitionResult;
 import dtool.engine.operations.FindDefinitionResult.FindDefinitionResultEntry;
 import melnorme.lang.tooling.CompletionProposalKind;
+import melnorme.lang.tooling.ElementAttributes;
 import melnorme.lang.tooling.ToolCompletionProposal;
 import melnorme.lang.tooling.ast.SourceRange;
 import melnorme.utilbox.collections.ArrayList2;
@@ -36,6 +38,24 @@ import melnorme.utilbox.misc.Location;
 public class LspFeatureSupport {
 
 	private LspFeatureSupport() {}
+
+	/* -----------------  URI Utilities  ----------------- */
+
+	/**
+	 * Convert a {@link Location} to a {@code file:///} URI string suitable for LSP.
+	 *
+	 * Java's {@code Path.toUri()} produces {@code file:/path} (null authority → one slash),
+	 * but LSP servers expect {@code file:///path} (empty-string authority → two slashes before
+	 * the path). serve-d's {@code uriToFile()} uses {@code skipOver("file://")} to strip the
+	 * prefix, so a single-slash URI is not recognised and returns null → no instance → no features.
+	 */
+	public static String fileUri(Location location) {
+		try {
+			return new URI("file", "", location.toPath().toAbsolutePath().toString(), null).toString();
+		} catch (URISyntaxException e) {
+			return location.toUri().toString(); // fallback (single-slash, best effort)
+		}
+	}
 
 	/* -----------------  Position Utilities  ----------------- */
 
@@ -176,7 +196,7 @@ public class LspFeatureSupport {
 
 		return new ToolCompletionProposal(
 				rplOffset, rplLength, insertText, label,
-				lspKindToProposalKind(lspKind), null,
+				lspKindToProposalKind(lspKind), new ElementAttributes(null),
 				detail, null, documentation);
 	}
 
@@ -256,7 +276,7 @@ public class LspFeatureSupport {
 	}
 
 	/** Lightweight markdown → HTML for hover display (handles the common subset serve-d emits). */
-	static String markdownToHtml(String md) {
+	public static String markdownToHtml(String md) {
 		if (md == null || md.isEmpty()) return "";
 
 		// Escape HTML special chars first so our replacements don't get double-escaped

@@ -51,7 +51,7 @@ public class DeeCompletionProposalComputer extends LangCompletionProposalCompute
 		if (lspServer.isReady() && lspServer.hasCapability("completionProvider")) {
 			try {
 				Location fileLocation = sourceContext.getFileLocation();
-				String uri = fileLocation.toUri().toString();
+				String uri = LspFeatureSupport.fileUri(fileLocation);
 				ArrayList2<ToolCompletionProposal> proposals = LspFeatureSupport.requestCompletion(
 						lspServer.getRouter(), uri, sourceContext.getSource(), sourceContext.getOffset());
 				return proposals;

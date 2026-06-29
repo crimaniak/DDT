@@ -74,7 +74,7 @@ public class DocDisplayInfoSupplier extends AbstractDocDisplayInfoSupplier {
 				if (lspServer.isReady()) {
 					try {
 						Location fileLocation = opContext.getFileLocation();
-						String uri = fileLocation.toUri().toString();
+						String uri = LspFeatureSupport.fileUri(fileLocation);
 						String html = LspFeatureSupport.requestHover(
 								lspServer.getRouter(), uri, sourceBuffer.getSource(), opContext.getOffset());
 						if (html != null) return html;
