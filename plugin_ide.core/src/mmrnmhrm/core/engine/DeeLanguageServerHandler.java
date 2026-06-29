@@ -36,6 +36,7 @@ public class DeeLanguageServerHandler implements ILanguageServerHandler  {
 
 	private final IProjectModelListener<BundleInfo> bundleListener;
 	private final FieldListenerRegistration statusListener;
+	private volatile boolean bundleListenerRegistered = false;
 
 	public DeeLanguageServerHandler() {
 		lspServer = new LspServer();
@@ -47,12 +48,18 @@ public class DeeLanguageServerHandler implements ILanguageServerHandler  {
 				pushImportPathsForProject(event.project, event.newProjectInfo2);
 			}
 		};
-		LangCore.getBundleModel().addListener(bundleListener);
 
-		// When LSP transitions to Connected, push paths for all existing projects.
+		// Register the bundle listener and push existing paths the first time LSP connects.
+		// Done lazily here (not in the constructor) because bundleManager is not yet
+		// initialized when DeeLanguageServerHandler is constructed — it is assigned one
+		// line after createLanguageServerHandler() returns in AbstractLangCore.<init>.
 		statusListener = lspServer.getStatusField().registerChangeListener(false, () -> {
 			String status = lspServer.getStatusField().get();
 			if (status != null && status.startsWith("Connected") && lspServer.isReady()) {
+				if (!bundleListenerRegistered) {
+					LangCore.getBundleModel().addListener(bundleListener);
+					bundleListenerRegistered = true;
+				}
 				pushAllProjectPaths();
 			}
 		});
@@ -91,7 +98,9 @@ public class DeeLanguageServerHandler implements ILanguageServerHandler  {
 	@Override
 	public void dispose() {
 		statusListener.dispose();
-		LangCore.getBundleModel().removeListener(bundleListener);
+		if (bundleListenerRegistered) {
+			LangCore.getBundleModel().removeListener(bundleListener);
+		}
 		lspServer.dispose();
 	}
 
