@@ -110,9 +110,10 @@ public class DeeBundleModelManager extends BundleModelManager<DeeBundleModel> {
 	protected BundleInfo createNewInfo(IProject project) {
 		DubBundleDescription unresolvedDescription = readUnresolvedBundleDescription(project);
 		
-		if(unresolvedDescription.hasErrors() && unresolvedDescription.isParseError()) {
-			// Remove the parse error - we will run `dub describe` anyways, as DUB might still be able to parse it.
-			unresolvedDescription = new DubBundleDescription(unresolvedDescription.getMainBundle(), 
+		if(unresolvedDescription.hasErrors()) {
+			// Remove the error - we will run `dub describe` anyways, as DUB can parse SDL and
+			// other formats that DDT's own manifest reader does not support.
+			unresolvedDescription = new DubBundleDescription(unresolvedDescription.getMainBundle(),
 				(DubBundleException) null);
 		}
 		
