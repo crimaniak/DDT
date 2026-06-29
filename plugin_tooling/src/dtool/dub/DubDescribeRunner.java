@@ -54,14 +54,25 @@ public class DubDescribeRunner {
 	}
 	
 	public DubBundleDescription runDescribeOperation() throws CommonException, OperationCancellation {
-		ProcessBuilder pb = allowDepDownload ? 
-				new ProcessBuilder(dubPath, "describe") : 
+		ProcessBuilder pb = allowDepDownload ?
+				new ProcessBuilder(dubPath, "describe") :
 				new ProcessBuilder(dubPath, "describe", "--nodeps");
-		
+
 		pb.directory(bundlePath.getLocation().toFile());
-		
+
 		ExternalProcessResult processResult = runProcessAndAwaitResult(pb);
-		
+
+		if(processResult.exitValue != 0 && allowDepDownload) {
+			// Full resolve failed (e.g. missing dependency not yet fetched).
+			// Fall back to --nodeps so we get at least the main bundle's source paths.
+			ProcessBuilder nodepsPb = new ProcessBuilder(dubPath, "describe", "--nodeps");
+			nodepsPb.directory(bundlePath.getLocation().toFile());
+			ExternalProcessResult nodepsResult = runProcessAndAwaitResult(nodepsPb);
+			if(nodepsResult.exitValue == 0) {
+				return parseDubDescribe(bundlePath, nodepsResult);
+			}
+		}
+
 		return parseDubDescribe(bundlePath, processResult);
 	}
 	

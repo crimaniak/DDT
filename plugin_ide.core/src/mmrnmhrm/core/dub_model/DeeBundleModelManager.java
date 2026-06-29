@@ -395,12 +395,14 @@ class ProjectModelDubDescribeTask extends ProjectUpdateBuildpathTask implements 
 		if (parentDir == null) return false;
 		String dirName = projectDir.getFileName().toString();
 
-		Path sdlPath = parentDir.resolve("dub.sdl");
-		if (Files.isRegularFile(sdlPath)) {
-			try {
-				String content = new String(Files.readAllBytes(sdlPath), StandardCharsets.UTF_8);
-				if (sdlListsSubpackage(content, dirName)) return true;
-			} catch (IOException e) { /* ignore, treat as not a subpackage */ }
+		for (String sdlName : new String[]{"dub.sdl", "dub.recipe"}) {
+			Path sdlPath = parentDir.resolve(sdlName);
+			if (Files.isRegularFile(sdlPath)) {
+				try {
+					String content = new String(Files.readAllBytes(sdlPath), StandardCharsets.UTF_8);
+					if (sdlListsSubpackage(content, dirName)) return true;
+				} catch (IOException e) { /* ignore, treat as not a subpackage */ }
+			}
 		}
 
 		Path jsonPath = parentDir.resolve("dub.json");

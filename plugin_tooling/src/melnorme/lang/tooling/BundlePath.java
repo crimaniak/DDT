@@ -30,8 +30,9 @@ public class BundlePath extends AbstractBundlePath {
 	public Location getManifestLocation(boolean provideDefault) {
 		Path manifest_json = PathUtil.createValidPath(DUB_MANIFEST_NAME_JSON);
 		Path manifest_sdl = PathUtil.createValidPath("dub.sdl");
+		Path manifest_recipe = PathUtil.createValidPath("dub.recipe");
 		Path manifest_default = provideDefault ? manifest_json : null;
-		return getManifest(getLocation(), list(manifest_json, manifest_sdl), manifest_default);
+		return getManifest(getLocation(), list(manifest_json, manifest_sdl, manifest_recipe), manifest_default);
 	}
 	
 }
