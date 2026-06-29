@@ -143,13 +143,19 @@ public class DeeBundleModelManager extends BundleModelManager<DeeBundleModel> {
 	
 	/* ----------------------------------- */
 	
-	protected class SearchCompilersOnPathOperation_Eclipse extends SearchCompilersOnPathOperation {
+	protected static class SearchCompilersOnPathOperation_Eclipse extends SearchCompilersOnPathOperation {
 		@Override
 		protected void handleWarning(String message) {
 			LangCore.logWarning(message);
 		}
 	}
-	
+
+	public static CompilerInstall detectPreferredCompiler() {
+		return new SearchCompilersOnPathOperation_Eclipse()
+				.searchForCompilersInDefaultPathEnvVars()
+				.getPreferredInstall();
+	}
+
 	protected BundleInfo createProjectInfo(DubBundleDescription dubBundleDescription) {
 		CompilerInstall compilerInstall = new SearchCompilersOnPathOperation_Eclipse().
 				searchForCompilersInDefaultPathEnvVars().getPreferredInstall();

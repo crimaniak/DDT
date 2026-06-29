@@ -12,21 +12,20 @@ package mmrnmhrm.core.lsp;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.IPath;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import dtool.engine.compiler_installs.CompilerInstall;
 import melnorme.lang.ide.core.DeeToolPreferences;
 import melnorme.lang.ide.core.LangCore;
 import melnorme.utilbox.fields.Field;
 import melnorme.utilbox.fields.IFieldView;
 import melnorme.utilbox.fields.IFieldView.FieldListenerRegistration;
+import melnorme.utilbox.misc.Location;
+import mmrnmhrm.core.dub_model.DeeBundleModelManager;
 
 /**
  * Manages the serve-d language server subprocess.
@@ -226,13 +225,58 @@ public class LspServer {
 	}
 
 	private void sendCompilerConfiguration(LspMessageRouter r) {
-		// Push compiler settings so serve-d's stdlib auto-detection uses ldc2.
-		// Without this, serve-d defaults to "dmd" which is not installed here.
-		// serve-d reads workspace/didChangeConfiguration settings.d.dubCompiler
-		// and passes it to autoDetectStdlibPaths(), which then finds /etc/ldc2.conf.
+		String configuredCompiler = DeeToolPreferences.LSP_DUB_COMPILER.get().trim();
+		String configuredStdlibPaths = DeeToolPreferences.LSP_STDLIB_PATHS.get().trim();
+
+		CompilerInstall install = DeeBundleModelManager.detectPreferredCompiler();
+
+		String dubCompiler = configuredCompiler.isEmpty()
+				? compilerTypeToName(install.getCompilerType())
+				: configuredCompiler;
+
+		JsonArray stdlibPathArray = new JsonArray();
+		if (configuredStdlibPaths.isEmpty()) {
+			for (Location loc : install.getLibrarySourceFolders()) {
+				stdlibPathArray.add(loc.toPathString());
+			}
+		} else {
+			for (String p : configuredStdlibPaths.split(java.io.File.pathSeparator)) {
+				String trimmed = p.trim();
+				if (!trimmed.isEmpty()) stdlibPathArray.add(trimmed);
+			}
+		}
+
 		JsonObject dConfig = new JsonObject();
-		dConfig.addProperty("dubCompiler", "ldc2");
-		dConfig.addProperty("dmdPath", "ldmd2");
+		dConfig.addProperty("dubCompiler", dubCompiler);
+		dConfig.addProperty("dmdPath", "ldc2".equals(dubCompiler) ? "ldmd2" : dubCompiler);
+		if (stdlibPathArray.size() > 0) {
+			dConfig.add("stdlibPath", stdlibPathArray);
+		}
+		JsonObject settings = new JsonObject();
+		settings.add("d", dConfig);
+		JsonObject params = new JsonObject();
+		params.add("settings", settings);
+		sendNotification(r, "workspace/didChangeConfiguration", params);
+	}
+
+	private static String compilerTypeToName(CompilerInstall.ECompilerType type) {
+		switch (type) {
+			case LDC: return "ldc2";
+			case GDC: return "gdc";
+			case DMD: return "dmd";
+			default: return "dmd";
+		}
+	}
+
+	public void sendProjectImportPaths(List<String> importPaths) {
+		LspMessageRouter r = this.router;
+		if (r == null || !ready) return;
+		JsonArray arr = new JsonArray();
+		for (String p : importPaths) {
+			arr.add(p);
+		}
+		JsonObject dConfig = new JsonObject();
+		dConfig.add("projectImportPaths", arr);
 		JsonObject settings = new JsonObject();
 		settings.add("d", dConfig);
 		JsonObject params = new JsonObject();

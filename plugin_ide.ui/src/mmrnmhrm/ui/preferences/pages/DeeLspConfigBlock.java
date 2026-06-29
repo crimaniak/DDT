@@ -38,6 +38,8 @@ public class DeeLspConfigBlock extends AbstractCompositePreferencesBlock {
 		protected final CheckBoxField enabledField;
 		protected final FileTextField pathField;
 		protected final TextFieldWidget argsField;
+		protected final TextFieldWidget compilerField;
+		protected final TextFieldWidget stdlibPathsField;
 
 		private Label statusLabel;
 		private FieldListenerRegistration statusReg;
@@ -56,6 +58,14 @@ public class DeeLspConfigBlock extends AbstractCompositePreferencesBlock {
 			argsField = new TextFieldWidget("Extra arguments:");
 			prefContext.bindToPreference(argsField, DeeToolPreferences.LSP_ARGS);
 			addChildWidget(argsField);
+
+			compilerField = new TextFieldWidget("Compiler for serve-d (e.g. ldc2, dmd — leave blank to auto-detect):");
+			prefContext.bindToPreference(compilerField, DeeToolPreferences.LSP_DUB_COMPILER);
+			addChildWidget(compilerField);
+
+			stdlibPathsField = new TextFieldWidget("Stdlib paths (colon-separated — leave blank to auto-detect):");
+			prefContext.bindToPreference(stdlibPathsField, DeeToolPreferences.LSP_STDLIB_PATHS);
+			addChildWidget(stdlibPathsField);
 
 			enabledField.addChangeListener(this::updateFieldsEnabledState);
 		}
@@ -98,6 +108,8 @@ public class DeeLspConfigBlock extends AbstractCompositePreferencesBlock {
 			boolean enabled = enabledField.getBooleanFieldValue();
 			pathField.setEnabled(enabled);
 			argsField.setEnabled(enabled);
+			compilerField.setEnabled(enabled);
+			stdlibPathsField.setEnabled(enabled);
 			refreshStatus();
 		}
 

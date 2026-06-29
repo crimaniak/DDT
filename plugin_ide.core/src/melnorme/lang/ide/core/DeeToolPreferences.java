@@ -27,5 +27,7 @@ public interface DeeToolPreferences extends ToolchainPreferences {
 	public static final BooleanPreference LSP_ENABLED = new BooleanPreference("lsp.enabled", false);
 	public static final StringPreference LSP_PATH = new StringPreference("lsp.path", "");
 	public static final StringPreference LSP_ARGS = new StringPreference("lsp.args", "");
+	public static final StringPreference LSP_DUB_COMPILER = new StringPreference("lsp.dubCompiler", "");
+	public static final StringPreference LSP_STDLIB_PATHS = new StringPreference("lsp.stdlibPaths", "");
 
 }
