@@ -521,10 +521,14 @@ public abstract class BuildManager {
 		);
 		
 		ArrayList2<ProjectBuildOperation> projectOps = ArrayList2.create();
-		
+
 		for (IProject project : projects) {
+			// Skip projects with no build info (e.g. bundle model still initializing).
+			if(getBuildInfo(project) == null) {
+				continue;
+			}
 			// Note: this will immediately cancel previous operations
-			ProjectBuildOperation newBuildOp = 
+			ProjectBuildOperation newBuildOp =
 				requestProjectBuildOperation(toolMonitor, project, clearMarkers, false);
 			projectOps.add(newBuildOp);
 		}

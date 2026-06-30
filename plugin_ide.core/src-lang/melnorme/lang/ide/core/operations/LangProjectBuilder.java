@@ -83,25 +83,36 @@ public abstract class LangProjectBuilder extends IncrementalProjectBuilder {
 	@Override
 	protected IProject[] build(int kind, Map<String, String> args, IProgressMonitor monitor) throws CoreException {
 		assertTrue(kind != CLEAN_BUILD);
-		
+
 		if(kind == IncrementalProjectBuilder.AUTO_BUILD) {
 			return null; // Ignore auto build
 		}
-		
-		ArrayList2<IProject> referenced = 
+
+		// Guard: the builder may be registered on non-D projects (e.g. when workspace metadata is stale
+		// or a demo project is imported alongside Java projects). Skip silently.
+		if(!getProject().isAccessible() || !getProject().hasNature(LangCore.NATURE_ID)) {
+			return null;
+		}
+
+		// Guard: skip if build info is not yet available (bundle model still initializing).
+		if(buildManager.getBuildInfo(getProject()) == null) {
+			return null;
+		}
+
+		ArrayList2<IProject> referenced =
 			ArrayList2.createFrom(getContext().getAllReferencedBuildConfigs())
 			.map((buildConfig) -> buildConfig.getProject())
 			.filterx(new ArrayList2<>(), (project) -> project.hasNature(LangCore.NATURE_ID))
 		;
-		
-		ArrayList2<IProject> referencing = 
+
+		ArrayList2<IProject> referencing =
 			ArrayList2.createFrom(getContext().getAllReferencingBuildConfigs())
 			.map((buildConfig) -> buildConfig.getProject())
 			.filterx(new ArrayList2<>(), (project) -> project.hasNature(LangCore.NATURE_ID))
 		;
-		
+
 		boolean firstCall = referenced.isEmpty();
-		
+
 		ArrayList2<IProject> allOurProjects = referencing;
 		allOurProjects.add(getProject());
 		
