@@ -10,11 +10,16 @@
  *******************************************************************************/
 package mmrnmhrm.ui.preferences.pages;
 
+import java.util.stream.Collectors;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Text;
 
+import dtool.engine.compiler_installs.CompilerInstall;
+import dtool.engine.compiler_installs.CompilerInstall.ECompilerType;
 import melnorme.lang.ide.core.DeeToolPreferences;
 import melnorme.lang.ide.core.LangCore_Actual;
 import melnorme.lang.ide.ui.preferences.AbstractCompositePreferencesBlock;
@@ -25,6 +30,7 @@ import melnorme.util.swt.components.fields.CheckBoxField;
 import melnorme.util.swt.components.fields.FileTextField;
 import melnorme.util.swt.components.fields.TextFieldWidget;
 import melnorme.utilbox.fields.IFieldView.FieldListenerRegistration;
+import mmrnmhrm.core.dub_model.DeeBundleModelManager;
 
 public class DeeLspConfigBlock extends AbstractCompositePreferencesBlock {
 
@@ -43,6 +49,8 @@ public class DeeLspConfigBlock extends AbstractCompositePreferencesBlock {
 
 		private Label statusLabel;
 		private FieldListenerRegistration statusReg;
+		private Text detectedCompilerText;
+		private Text detectedStdlibText;
 
 		public LspGroup() {
 			super("Language Server (serve-d):", 3);
@@ -73,11 +81,53 @@ public class DeeLspConfigBlock extends AbstractCompositePreferencesBlock {
 		@Override
 		protected void createContents(Composite topControl) {
 			super.createContents(topControl); // create all child widgets first
+
+			Label autoCompilerLabel = new Label(topControl, SWT.NONE);
+			autoCompilerLabel.setText("Auto-detected compiler:");
+			autoCompilerLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false, 3, 1));
+
+			detectedCompilerText = new Text(topControl, SWT.READ_ONLY | SWT.BORDER);
+			detectedCompilerText.setText("(detecting...)");
+			detectedCompilerText.setEnabled(false);
+			detectedCompilerText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+
+			Label autoStdlibLabel = new Label(topControl, SWT.NONE);
+			autoStdlibLabel.setText("Auto-detected stdlib paths:");
+			autoStdlibLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false, 3, 1));
+
+			detectedStdlibText = new Text(topControl, SWT.READ_ONLY | SWT.BORDER | SWT.MULTI | SWT.V_SCROLL);
+			detectedStdlibText.setText("(detecting...)");
+			detectedStdlibText.setEnabled(false);
+			GridData stdlibGd = new GridData(SWT.FILL, SWT.FILL, true, false, 3, 1);
+			stdlibGd.heightHint = 60;
+			detectedStdlibText.setLayoutData(stdlibGd);
+
+			new Thread(() -> {
+				CompilerInstall install = DeeBundleModelManager.detectPreferredCompiler();
+				SWTUtil.runInSWTThread(() -> updateDetectedCompilerInfo(install));
+			}, "DDT-compiler-detection").start();
+
 			statusLabel = new Label(topControl, SWT.NONE);
 			statusLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
 			statusReg = LangCore_Actual.getLspServer().getStatusField()
 					.registerChangeListener(true, () -> SWTUtil.runInSWTThread(this::refreshStatus));
 			topControl.addDisposeListener(e -> statusReg.dispose());
+		}
+
+		private void updateDetectedCompilerInfo(CompilerInstall install) {
+			if (detectedCompilerText == null || detectedCompilerText.isDisposed()) return;
+
+			if (install.getCompilerType() == ECompilerType.OTHER) {
+				detectedCompilerText.setText("(not found)");
+				detectedStdlibText.setText("(not found)");
+			} else {
+				detectedCompilerText.setText(install.getCompilerPath().toString());
+				String paths = install.getLibrarySourceFolders().stream()
+						.map(loc -> loc.toPathString())
+						.collect(Collectors.joining("\n"));
+				detectedStdlibText.setText(paths.isEmpty() ? "(not found)" : paths);
+			}
+			detectedCompilerText.getParent().layout(true, true);
 		}
 
 		private void refreshStatus() {
