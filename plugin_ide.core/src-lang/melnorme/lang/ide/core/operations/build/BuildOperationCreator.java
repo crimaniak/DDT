@@ -94,6 +94,10 @@ public class BuildOperationCreator implements BuildManagerMessages {
 						resource.refreshLocal(IResource.DEPTH_INFINITE, EclipseUtils.pm(om));
 					} catch(CoreException e) {
 						throw EclipseUtils.createCommonException(e);
+					} catch(IllegalArgumentException e) {
+						// Eclipse AliasManager bug: throws IAE when a nested Eclipse project exists
+						// within the refreshed location (e.g. ScreenshotsDemoProject nested in DDT project).
+						// The refresh completes for all other resources; suppress to avoid false error dialog.
 					}
 				}
 			}
