@@ -6,7 +6,7 @@ Bundle-Name: %pluginName
 Bundle-Vendor: %pluginProvider
 Bundle-Localization: plugin
 Bundle-Activator: melnorme.lang.ide.debug.ui.DebugUI
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.dsource.ddt.ide.core,
  org.dsource.ddt.ide.ui,
  org.eclipse.cdt.dsf;bundle-version="[2.7.0,10.0.0)",
