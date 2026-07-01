@@ -6,7 +6,7 @@ Fragment-Host: org.dsource.ddt.dtool
 Bundle-Vendor: %pluginProvider
 Bundle-Name: %pluginNameTests
 Bundle-Localization: plugin
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Require-Bundle: org.junit;bundle-version="4.8.0"
 Bundle-ClassPath: .
 Export-Package: melnorme.lang.tests,
