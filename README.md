@@ -1,3 +1,34 @@
+# DDT Resurrected
+
+DDT is an Eclipse IDE plugin for the D programming language. After being dormant since 2017, DDT
+has been revived with modern Eclipse platform support, a working Language Server integration via
+[serve-d](https://github.com/Pure-D/serve-d), and an automatically deployed update site.
+
+## Installing DDT
+
+In Eclipse, open **Help → Install New Software...**, click **Add...**, and enter:
+
+| Field    | Value                              |
+|----------|------------------------------------|
+| Name     | DDT                                |
+| Location | `https://crimaniak.github.io/DDT/` |
+
+**Requirements:** Java 17+, Eclipse 2025-03 or later.
+
+## What's New (since 2017)
+
+- **Language Server integration** — serve-d provides code completion, hover documentation, and go-to-definition via LSP
+- **dub.sdl and dub.recipe support** — projects using SDL or recipe manifest formats are now recognized
+- **Named argument parsing** — DIP1040 / DMD 2.103+ named arguments parsed correctly
+- **LDC detection** on Ubuntu/Debian (`/usr/lib/ldc/<arch>/include/d/`)
+- **Auto-detected compiler & stdlib paths** shown in the Language Server settings page
+- **Security fixes** — gson (CVE-2022-25647) and junit (CVE-2020-15250) updated
+- **Modern build** — Eclipse 2025-03, Tycho 4.0.13, Java 21 toolchain, GitHub Actions CI/CD
+
+See [CHANGELOG.md](CHANGELOG.md) for the full list of changes.
+
+---
+
 Project website: http://ddt-ide.github.io/
 
 As of 2017, **DDT is no longer actively maintained**, see this [blog post](http://pureconcepture.blogspot.co.uk/2017/07/goodbye-to-eclipse-end-of-era-for.html) for more information. If you are interested in contributing, you can for now fork the project - and there should be enough information here detailing how to build, test, release, etc.
